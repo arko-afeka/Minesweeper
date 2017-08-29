@@ -1,0 +1,19 @@
+<resources>
+    <string name="app_name">Minesweeper</string>
+    <string name="start_button">Start Game</string>
+    <string name="high_score_button">High Scores</string>
+    <string name="exit_button">Exit</string>
+    <string name="level_easy">Easy</string>
+    <string name="level_med">Medium</string>
+    <string name="level_hard">Hard</string>
+    <string name="start_game">Start</string>
+
+    <!-- Consts -->
+    <string name="last_played_level">game_level_saved</string>
+    <string name="selected_level">selected_game_level</string>
+
+    <!-- Config key suffix -->
+    <string name="config_cells">.cells</string>
+    <string name="config_mines">.mines</string>
+    <string name="config_text">.text</string>
+</resources>
