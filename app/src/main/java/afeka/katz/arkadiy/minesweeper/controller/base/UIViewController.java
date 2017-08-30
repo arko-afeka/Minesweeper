@@ -1,10 +1,9 @@
-package afeka.katz.arkadiy.minesweeper.utils;
+package afeka.katz.arkadiy.minesweeper.controller.base;
 
 import android.os.Bundle;
-import android.os.PersistableBundle;
-import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
+import android.view.Window;
 
 import afeka.katz.arkadiy.minesweeper.R;
 
@@ -15,7 +14,8 @@ import afeka.katz.arkadiy.minesweeper.R;
 public abstract class UIViewController extends AppCompatActivity implements View.OnClickListener{
     @Override
     public void onCreate(Bundle savedInstanceState) {
-        getSupportActionBar().setDisplayShowTitleEnabled(false);
+        this.requestWindowFeature(Window.FEATURE_NO_TITLE);
+//        getSupportActionBar().setDisplayShowTitleEnabled(false);
         super.onCreate(savedInstanceState);
         onLaunch();
     }

@@ -1,11 +1,11 @@
 package afeka.katz.arkadiy.minesweeper.controller;
 
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.view.View;
 
 import afeka.katz.arkadiy.minesweeper.R;
-import afeka.katz.arkadiy.minesweeper.utils.UIViewController;
+import afeka.katz.arkadiy.minesweeper.controller.base.UIViewController;
+import afeka.katz.arkadiy.minesweeper.controller.sub.GameEndSubController;
 
 public class MainMenuController extends UIViewController {
     @Override
@@ -27,14 +27,7 @@ public class MainMenuController extends UIViewController {
     }
 
     private void onScore(View view) {
-
-    }
-
-    private void initConfiguration() {
-        SharedPreferences prefs = getSharedPreferences("mines", MODE_PRIVATE);
-        SharedPreferences.Editor editor = prefs.edit();
-
-
+        startActivity(new Intent(this, HighScoresController.class));
     }
 
     @Override

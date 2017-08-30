@@ -1,4 +1,4 @@
-package afeka.katz.arkadiy.minesweeper.game;
+package afeka.katz.arkadiy.minesweeper.game.widget;
 
 import android.content.Context;
 import android.support.v7.widget.AppCompatButton;

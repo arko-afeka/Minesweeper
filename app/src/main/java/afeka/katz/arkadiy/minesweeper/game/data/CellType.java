@@ -1,4 +1,4 @@
-package afeka.katz.arkadiy.minesweeper.utils;
+package afeka.katz.arkadiy.minesweeper.game.data;
 
 /**
  * Created by arkokat on 8/29/2017.

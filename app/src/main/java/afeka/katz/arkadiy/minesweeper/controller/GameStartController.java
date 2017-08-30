@@ -5,12 +5,10 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.animation.GridLayoutAnimationController;
-import android.widget.GridLayout;
 
 import afeka.katz.arkadiy.minesweeper.R;
-import afeka.katz.arkadiy.minesweeper.utils.Level;
-import afeka.katz.arkadiy.minesweeper.utils.UIViewController;
+import afeka.katz.arkadiy.minesweeper.controller.base.UIViewController;
+import afeka.katz.arkadiy.minesweeper.model.enums.Level;
 
 public class GameStartController extends UIViewController implements View.OnFocusChangeListener {
     private Level selectedLevel = null;

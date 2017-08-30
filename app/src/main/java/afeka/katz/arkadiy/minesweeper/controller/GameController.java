@@ -1,28 +1,19 @@
 package afeka.katz.arkadiy.minesweeper.controller;
 
-import android.content.DialogInterface;
-import android.content.Intent;
-import android.database.DataSetObserver;
 import android.os.SystemClock;
-import android.support.v7.app.AlertDialog;
-import android.text.InputType;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.AdapterView;
-import android.widget.BaseAdapter;
 import android.widget.Chronometer;
-import android.widget.EditText;
 import android.widget.GridView;
-import android.widget.ListAdapter;
-import android.widget.PopupWindow;
 
 import afeka.katz.arkadiy.minesweeper.R;
-import afeka.katz.arkadiy.minesweeper.game.CellAdapter;
-import afeka.katz.arkadiy.minesweeper.utils.CellType;
-import afeka.katz.arkadiy.minesweeper.utils.GameConfig;
-import afeka.katz.arkadiy.minesweeper.utils.Level;
-import afeka.katz.arkadiy.minesweeper.utils.TouchType;
-import afeka.katz.arkadiy.minesweeper.utils.UIViewController;
+import afeka.katz.arkadiy.minesweeper.controller.base.UIViewController;
+import afeka.katz.arkadiy.minesweeper.controller.sub.GameEndSubController;
+import afeka.katz.arkadiy.minesweeper.game.adapter.CellAdapter;
+import afeka.katz.arkadiy.minesweeper.model.config.GameConfig;
+import afeka.katz.arkadiy.minesweeper.model.enums.GameProgress;
+import afeka.katz.arkadiy.minesweeper.model.enums.Level;
+import afeka.katz.arkadiy.minesweeper.model.enums.TouchType;
 
 /**
  * Created by arkokat on 8/28/2017.
@@ -33,8 +24,13 @@ public class GameController extends UIViewController implements AdapterView.OnIt
     private TouchType touchType = TouchType.MINE;
     private GameConfig config;
     private CellAdapter adapter;
-    private String m_Text = "";
-    Chronometer timer;
+    private GameEndSubController endController;
+    private Chronometer timer;
+    private long timerStopped = 0;
+
+    public GameController() {
+        endController = new GameEndSubController(this);
+    }
 
     public void onFlag(View v) {
         touchType = TouchType.FLAG;
@@ -95,71 +91,42 @@ public class GameController extends UIViewController implements AdapterView.OnIt
     }
 
     @Override
+    protected void onStop() {
+        super.onStop();
+
+        timerStopped = timer.getBase() - SystemClock.elapsedRealtime();
+        timer.stop();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+
+        timer.stop();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        timer.setBase(SystemClock.elapsedRealtime() + timerStopped);
+        timer.start();
+    }
+
+    @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         switch (touchType) {
             case FLAG:
                 adapter.setFlag(position);
                 break;
             case MINE:
-                switch (adapter.open(position)) {
-                    case EXPLODED:
-                        final AlertDialog.Builder exploded = new AlertDialog.Builder(this, R.style.MyAlertDialogStyle);
+                GameProgress prog = adapter.open(position);
 
-                        exploded.setTitle("EXPLODED");
-                        exploded.setMessage("You've lost, a new game? or back?");
-                        exploded.setPositiveButton("NEW GAME", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                startActivity(getIntent());
-                                finish();
-                            }
-                        });
+                if (prog != GameProgress.CONTINUE) timer.stop();
 
-                        exploded.setNegativeButton("BACK", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                finish();
-                            }
-                        });
-                        exploded.show();
-                        break;
-                    case FINISHED:
-                        final AlertDialog.Builder finished = new AlertDialog.Builder(this);
-                        finished.setTitle("YOU WON!");
-                        finished.setMessage("Input your name for highscores! empty string not to save");
-
-                        final EditText input = new EditText(this);
-                        input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
-                        finished.setView(input);
-
-                        finished.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                m_Text = input.getText().toString();
-
-                                if (m_Text.length() > 0) {
-
-                                }
-
-                                startActivity(new Intent(GameController.this, HighScoresController.class));
-                                finish();
-                            }
-                        });
-
-                        finished.setNegativeButton("CANCEL", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                finish();
-                            }
-                        });
-
-                        finished.show();
-                        break;
-                }
+                endController.invoke(prog, SystemClock.elapsedRealtime() - timer.getBase());
                 break;
         }
-
-        ((BaseAdapter)parent.getAdapter()).notifyDataSetChanged();
     }
 
 

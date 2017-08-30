@@ -1,4 +1,4 @@
-package afeka.katz.arkadiy.minesweeper.utils;
+package afeka.katz.arkadiy.minesweeper.model.enums;
 
 /**
  * Created by arkokat on 8/28/2017.

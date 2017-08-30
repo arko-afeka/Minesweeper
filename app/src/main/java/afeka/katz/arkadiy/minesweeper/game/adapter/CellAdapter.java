@@ -1,22 +1,13 @@
-package afeka.katz.arkadiy.minesweeper.game;
+package afeka.katz.arkadiy.minesweeper.game.adapter;
 
-import android.content.ClipData;
 import android.content.Context;
-import android.database.DataSetObserver;
-import android.graphics.Color;
-import android.graphics.drawable.Drawable;
-import android.media.Image;
 import android.support.v4.content.ContextCompat;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.Button;
-import android.widget.GridView;
-import android.widget.ImageButton;
-import android.widget.ListAdapter;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -27,10 +18,12 @@ import java.util.Random;
 import java.util.Set;
 
 import afeka.katz.arkadiy.minesweeper.R;
-import afeka.katz.arkadiy.minesweeper.utils.CellType;
-import afeka.katz.arkadiy.minesweeper.utils.GameConfig;
-import afeka.katz.arkadiy.minesweeper.utils.GameProgress;
-import afeka.katz.arkadiy.minesweeper.utils.Level;
+import afeka.katz.arkadiy.minesweeper.game.data.CellData;
+import afeka.katz.arkadiy.minesweeper.game.data.Position;
+import afeka.katz.arkadiy.minesweeper.game.data.CellType;
+import afeka.katz.arkadiy.minesweeper.model.config.GameConfig;
+import afeka.katz.arkadiy.minesweeper.model.enums.GameProgress;
+import afeka.katz.arkadiy.minesweeper.model.enums.Level;
 
 /**
  * Created by arkokat on 8/29/2017.
@@ -75,32 +68,36 @@ public class CellAdapter extends BaseAdapter {
         generateCells();
     }
 
-    private void generateCells() {
-        Set<Integer> generatedMines = new HashSet<>();
-        Random rand = new Random();
-
-        while (generatedMines.size() != NUMBER_OF_MINES) {
-            generatedMines.add(rand.nextInt(NUMBER_OF_CELLS * NUMBER_OF_CELLS));
-        }
-
-        for (Integer minePos: generatedMines) {
-            minesLocation.add(new Position(minePos / NUMBER_OF_CELLS, minePos % NUMBER_OF_CELLS));
-        }
-    }
-
     @Override
     public int getCount() {
         return NUMBER_OF_CELLS * NUMBER_OF_CELLS;
     }
 
     @Override
-    public Object getItem(int position) {
+    public CellData getItem(int position) {
+        Position pos = getPos(position);
+
+        switch (cells[pos.getX()][pos.getY()]) {
+            case FLAG:
+                return new CellData(null, "", R.mipmap.ic_flag);
+            case OPEN:
+                if (nearMines.containsKey(pos)) {
+                    return new CellData(ContextCompat.getColor(cx, R.color.colorAccent), String.valueOf(nearMines.get(pos)), null);
+                }
+
+                return new CellData(ContextCompat.getColor(cx, R.color.colorAccent), "", null);
+            case MINE:
+                return new CellData(null, "", R.mipmap.ic_mine);
+            case NONE:
+                return new CellData(ContextCompat.getColor(cx, R.color.semiTransparentGrey), "", null);
+        }
+
         return null;
     }
 
     @Override
     public long getItemId(int position) {
-        return 0;
+        return position;
     }
 
     @Override
@@ -111,37 +108,18 @@ public class CellAdapter extends BaseAdapter {
         if (v == null) {
             v = mInflater.inflate(R.layout.grid_item, parent, false);
             v.setTag(R.id.picture, v.findViewById(R.id.picture));
-            v.setTag(R.id.text, v.findViewById(R.id.text));
         }
 
         picture = (Button) v.getTag(R.id.picture);
+        CellData data = getItem(position);
 
-        Position pos = getPos(position);
+        picture.setTextSize(TypedValue.COMPLEX_UNIT_DIP, textSize);
+        picture.setText(data.getText());
 
-        switch (cells[pos.getX()][pos.getY()]) {
-            case FLAG:
-                picture.setBackgroundResource(R.mipmap.ic_flag);
-                break;
-            case OPEN:
-                if (nearMines.containsKey(pos)) {
-                    picture.setText(String.valueOf(nearMines.get(pos)));
-                }
-
-                picture.setTextSize(TypedValue.COMPLEX_UNIT_DIP, textSize);
-                picture.setBackgroundColor(ContextCompat.getColor(cx, R.color.colorAccent));
-                break;
-            case MINE:
-                picture.setBackgroundResource(R.mipmap.ic_mine);
-                break;
-            case NONE:
-                picture.setBackgroundColor(ContextCompat.getColor(cx, R.color.semiTransparentGrey));
-        }
+        if (data.getBackgroundResource() != null) picture.setBackgroundResource(data.getBackgroundResource());
+        if (data.getBackgroundColor() != null) picture.setBackgroundColor(data.getBackgroundColor());
 
         return v;
-    }
-
-    private Position getPos(int position) {
-        return new Position(position / NUMBER_OF_CELLS, position % NUMBER_OF_CELLS);
     }
 
     public void setFlag(int position) {
@@ -155,6 +133,63 @@ public class CellAdapter extends BaseAdapter {
                 cells[pos.getX()][pos.getY()] = CellType.FLAG;
                 break;
         }
+
+        this.notifyDataSetChanged();
+    }
+
+    public GameProgress open(int position) {
+        Position pos = getPos(position);
+        GameProgress res = GameProgress.CONTINUE;
+
+        switch (getCellType(position)) {
+            case MINE:
+                openMines();
+                res = GameProgress.EXPLODED;
+            case NONE:
+                openNearCells(pos);
+                if (checkFinished()) res = GameProgress.FINISHED;
+        }
+
+        this.notifyDataSetChanged();
+        return res;
+    }
+
+    private void generateCells() {
+        Set<Integer> generatedMines = new HashSet<>();
+        Random rand = new Random();
+
+        while (generatedMines.size() != NUMBER_OF_MINES) {
+            generatedMines.add(rand.nextInt(NUMBER_OF_CELLS * NUMBER_OF_CELLS));
+        }
+
+        for (Integer minePos: generatedMines) {
+            minesLocation.add(new Position(minePos / NUMBER_OF_CELLS, minePos % NUMBER_OF_CELLS));
+        }
+    }
+
+    private Position getPos(int position) {
+        return new Position(position / NUMBER_OF_CELLS, position % NUMBER_OF_CELLS);
+    }
+
+    private CellType getCellType(Position pos) {
+        return minesLocation.contains(pos) ? CellType.MINE : cells[pos.getX()][pos.getY()] == null ? CellType.NONE : cells[pos.getX()][pos.getY()];
+    }
+
+    private CellType getCellType(int position) {
+        Position pos = getPos(position);
+        return getCellType(pos);
+    }
+
+    private boolean checkFinished() {
+        for (int i = 0; i < cells.length; ++i) {
+            for (int j = 0; j < cells[i].length; ++j) {
+                if (cells[i][j] == CellType.NONE) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
     }
 
     private void openMines() {
@@ -202,41 +237,5 @@ public class CellAdapter extends BaseAdapter {
         } else {
             nearMines.put(pos, nearMinesCount);
         }
-    }
-
-    private boolean checkFinished() {
-        for (int i = 0; i < cells.length; ++i) {
-            for (int j = 0; j < cells[i].length; ++j) {
-                if (cells[i][j] == CellType.NONE) {
-                    return false;
-                }
-            }
-        }
-
-        return true;
-    }
-
-    public GameProgress open(int position) {
-        Position pos = getPos(position);
-
-        switch (getCellType(position)) {
-            case MINE:
-                openMines();
-                return GameProgress.EXPLODED;
-            case NONE:
-                nearMines = new HashMap<>();
-                openNearCells(pos);
-                if (checkFinished()) return GameProgress.FINISHED;
-        }
-        return GameProgress.CONTINUE;
-    }
-
-    private CellType getCellType(Position pos) {
-        return minesLocation.contains(pos) ? CellType.MINE : cells[pos.getX()][pos.getY()] == null ? CellType.NONE : cells[pos.getX()][pos.getY()];
-    }
-
-    public CellType getCellType(int position) {
-        Position pos = getPos(position);
-        return getCellType(pos);
     }
 }

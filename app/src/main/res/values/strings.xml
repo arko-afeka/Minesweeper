@@ -11,6 +11,8 @@
     <!-- Consts -->
     <string name="last_played_level">game_level_saved</string>
     <string name="selected_level">selected_game_level</string>
+    <string name="player_name">player_name</string>
+    <string name="player_time">player_time</string>
 
     <!-- Config key suffix -->
     <string name="config_cells">.cells</string>

@@ -1,4 +1,4 @@
-package afeka.katz.arkadiy.minesweeper.utils;
+package afeka.katz.arkadiy.minesweeper.model.config;
 
 import android.content.res.Resources;
 import android.util.Log;
