@@ -122,8 +122,9 @@ public class CellAdapter extends BaseAdapter {
         return v;
     }
 
-    public void setFlag(int position) {
+    public GameProgress setFlag(int position) {
         Position pos = getPos(position);
+        GameProgress res = GameProgress.CONTINUE;
 
         switch (cells[pos.getX()][pos.getY()]) {
             case FLAG:
@@ -134,7 +135,11 @@ public class CellAdapter extends BaseAdapter {
                 break;
         }
 
+        if (checkFinished()) res = GameProgress.FINISHED;
+
         this.notifyDataSetChanged();
+
+        return res;
     }
 
     public GameProgress open(int position) {

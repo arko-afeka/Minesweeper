@@ -18,7 +18,12 @@
         </activity>
         <activity android:name=".controller.GameStartController" />
         <activity android:name=".controller.GameController" />
-        <activity android:name=".controller.HighScoresController"></activity>
+        <activity android:name=".controller.HighScoresController" />
+
+        <service
+            android:name=".service.LocationService"
+            android:enabled="true"
+            android:exported="true"></service>
     </application>
 
 </manifest>

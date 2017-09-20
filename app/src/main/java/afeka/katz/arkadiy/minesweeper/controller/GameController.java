@@ -83,6 +83,14 @@ public class GameController extends UIViewController implements AdapterView.OnIt
         grid.setOnItemClickListener(this);
     }
 
+    private void startLoseAnimation() {
+
+    }
+
+    private void startWinAnimation() {
+
+    }
+
     @Override
     protected void onDestroy() {
         super.onDestroy();
@@ -115,18 +123,19 @@ public class GameController extends UIViewController implements AdapterView.OnIt
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+        GameProgress prog = GameProgress.CONTINUE;
         switch (touchType) {
             case FLAG:
-                adapter.setFlag(position);
+                prog = adapter.setFlag(position);
                 break;
             case MINE:
-                GameProgress prog = adapter.open(position);
-
-                if (prog != GameProgress.CONTINUE) timer.stop();
-
-                endController.invoke(prog, SystemClock.elapsedRealtime() - timer.getBase());
+                prog = adapter.open(position);
                 break;
         }
+
+        if (prog != GameProgress.CONTINUE) timer.stop();
+
+        endController.invoke(prog, SystemClock.elapsedRealtime() - timer.getBase());
     }
 
 
