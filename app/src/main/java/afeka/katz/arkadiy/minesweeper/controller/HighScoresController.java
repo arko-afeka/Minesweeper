@@ -1,52 +1,80 @@
 package afeka.katz.arkadiy.minesweeper.controller;
 
 import android.content.Intent;
-import android.text.format.DateFormat;
-import android.view.LayoutInflater;
+import android.app.Fragment;
+import android.app.FragmentManager;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.TextView;
+import android.widget.Button;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
 import afeka.katz.arkadiy.minesweeper.R;
 import afeka.katz.arkadiy.minesweeper.controller.base.UIViewController;
-import afeka.katz.arkadiy.minesweeper.model.beans.KeyValue;
+import afeka.katz.arkadiy.minesweeper.controller.fragment.highscore.HighScoreListFragment;
+import afeka.katz.arkadiy.minesweeper.controller.fragment.highscore.HighScoreMapFragment;
+import afeka.katz.arkadiy.minesweeper.model.beans.HighScore;
 import afeka.katz.arkadiy.minesweeper.model.db.HighScorePersist;
 
 public class HighScoresController extends UIViewController {
-    private final int MAX_SCORES = 8;
+    private final int MAX_SCORES = 10;
 
     private HighScorePersist highScorePersist;
-    private LayoutInflater inflater;
+    private boolean mapShown = false;
+    private List<HighScore> scores;
+
+    @Override
+    public void onClick(View v) {
+        super.onClick(v);
+
+        if (v.getId() == R.id.map_button) {
+            mapShown = !mapShown;
+
+            if (mapShown) {
+                showMap();
+                v.setBackgroundResource(R.mipmap.ic_map_pressed);
+                v.invalidate();
+            } else {
+                showList();
+                v.setBackgroundResource(R.mipmap.ic_map);
+                v.invalidate();
+            }
+        }
+    }
+
+    private void showMap() {
+        Fragment fragment = HighScoreMapFragment.newInstance(new ArrayList<>(scores));
+        FragmentManager manager = getFragmentManager();
+        manager.beginTransaction().replace(R.id.fragment_container, fragment).commit();
+    }
+
+    private void showList() {
+        Fragment fragment = HighScoreListFragment.newInstance(new ArrayList<>(scores));
+        FragmentManager manager = getFragmentManager();
+        manager.beginTransaction().replace(R.id.fragment_container, fragment).commit();
+    }
 
     @Override
     protected void onLaunch() {
         setContentView(R.layout.activity_high_scores_controller);
 
         super.onLaunch();
-        highScorePersist = new HighScorePersist(this);
         Intent curIntent = getIntent();
 
         if (curIntent.getCharSequenceExtra(getString(R.string.player_name)) != null) {
             highScorePersist.insertNewHighScore(
-                    curIntent.getCharSequenceExtra(getString(R.string.player_name)).toString(),
-                    curIntent.getLongExtra(getString(R.string.player_time), Long.MAX_VALUE)
+                curIntent.getCharSequenceExtra(getString(R.string.player_name)).toString(),
+                curIntent.getLongExtra(getString(R.string.player_time), Long.MAX_VALUE),
+                curIntent.getDoubleExtra(getString(R.string.player_location_longitude), Double.MAX_VALUE),
+                curIntent.getDoubleExtra(getString(R.string.player_location_latitue), Double.MAX_VALUE)
             );
         }
 
-        List<KeyValue<String, Long>> scores = highScorePersist.getHighScores(MAX_SCORES);
-        inflater = LayoutInflater.from(this);
+        highScorePersist = new HighScorePersist(this);
+        scores = highScorePersist.getHighScores(MAX_SCORES);
 
-        for (KeyValue<String, Long> score : scores) {
-            View v = inflater.inflate(R.layout.highscore_item, (ViewGroup) findViewById(R.id.high_score_data), false);
-            ((TextView)v.findViewById(R.id.player_name)).setText(score.getKey());
-            long time = score.getValue() / 1000;
-
-            ((TextView)v.findViewById(R.id.player_time)).setText(String.format("%02d::%02d::%02d", time / 3600, time % 3600 / 60, time % 60));
-
-            ((ViewGroup) findViewById(R.id.high_score_data)).addView(v);
-        }
+        findViewById(R.id.map_button).setOnClickListener(this);
+        showList();
     }
 }

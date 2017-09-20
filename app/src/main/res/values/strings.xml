@@ -13,6 +13,9 @@
     <string name="selected_level">selected_game_level</string>
     <string name="player_name">player_name</string>
     <string name="player_time">player_time</string>
+    <string name="player_location_latitue">player_location_latitue</string>
+    <string name="player_location_longitude">player_location_longitude</string>
+    <string name="high_scores">high_scores</string>
 
     <!-- Config key suffix -->
     <string name="config_cells">.cells</string>

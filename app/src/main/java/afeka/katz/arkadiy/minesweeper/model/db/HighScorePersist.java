@@ -10,6 +10,7 @@ import android.provider.ContactsContract;
 import java.util.ArrayList;
 import java.util.List;
 
+import afeka.katz.arkadiy.minesweeper.model.beans.HighScore;
 import afeka.katz.arkadiy.minesweeper.model.beans.KeyValue;
 
 /**
@@ -23,11 +24,13 @@ public class HighScorePersist {
         dataBase = new DataBase(cx);
     }
 
-    public void insertNewHighScore(String name, long time) {
+    public void insertNewHighScore(String name, long time, double longitude, double latitude) {
         ContentValues values = new ContentValues();
 
         values.put(DataBase.COLUMN_NAME, name);
         values.put(DataBase.COLUMN_TIME, time);
+        values.put(DataBase.COLUMN_LATITUDE, latitude);
+        values.put(DataBase.COLUMN_LONGITUDE, longitude);
 
         SQLiteDatabase db = dataBase.getWritableDatabase();
 
@@ -36,12 +39,14 @@ public class HighScorePersist {
         db.close();
     }
 
-    public List<KeyValue<String, Long>> getHighScores(int count) {
+    public List<HighScore> getHighScores(int count) {
         SQLiteDatabase db = dataBase.getReadableDatabase();
 
         String[] projection = {
                 DataBase.COLUMN_NAME,
-                DataBase.COLUMN_TIME
+                DataBase.COLUMN_TIME,
+                DataBase.COLUMN_LATITUDE,
+                DataBase.COLUMN_LONGITUDE
         };
 
         String sortOrder =
@@ -57,12 +62,14 @@ public class HighScorePersist {
                 sortOrder                                 // The sort order
         );
 
-        List<KeyValue<String, Long>> result = new ArrayList<>(count);
+        List<HighScore> result = new ArrayList<>(count);
 
         while (cursor.moveToNext() && result.size() < count) {
-            result.add(new KeyValue<String, Long>(
+            result.add(new HighScore(
                     cursor.getString(cursor.getColumnIndex(DataBase.COLUMN_NAME)),
-                    cursor.getLong(cursor.getColumnIndex(DataBase.COLUMN_TIME))
+                    cursor.getLong(cursor.getColumnIndex(DataBase.COLUMN_TIME)),
+                    cursor.getDouble(cursor.getColumnIndex(DataBase.COLUMN_LONGITUDE)),
+                    cursor.getDouble(cursor.getColumnIndex(DataBase.COLUMN_LATITUDE))
             ));
         }
 

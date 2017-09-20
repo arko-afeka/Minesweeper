@@ -1,14 +1,29 @@
 package afeka.katz.arkadiy.minesweeper.controller;
 
+import android.Manifest;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.content.pm.PackageManager;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
+import android.os.Bundle;
+import android.os.Looper;
 import android.os.SystemClock;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
+import android.support.v7.app.AlertDialog;
+import android.text.InputType;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Chronometer;
+import android.widget.EditText;
 import android.widget.GridView;
 
 import afeka.katz.arkadiy.minesweeper.R;
 import afeka.katz.arkadiy.minesweeper.controller.base.UIViewController;
 import afeka.katz.arkadiy.minesweeper.controller.sub.GameEndSubController;
+import afeka.katz.arkadiy.minesweeper.controller.sub.LocationSubController;
 import afeka.katz.arkadiy.minesweeper.game.adapter.CellAdapter;
 import afeka.katz.arkadiy.minesweeper.model.config.GameConfig;
 import afeka.katz.arkadiy.minesweeper.model.enums.GameProgress;
@@ -19,17 +34,19 @@ import afeka.katz.arkadiy.minesweeper.model.enums.TouchType;
  * Created by arkokat on 8/28/2017.
  */
 
-public class GameController extends UIViewController implements AdapterView.OnItemClickListener {
+public class GameController extends UIViewController implements AdapterView.OnItemClickListener, ActivityCompat.OnRequestPermissionsResultCallback {
     private Level SELECTED_LEVEL;
     private TouchType touchType = TouchType.MINE;
     private GameConfig config;
     private CellAdapter adapter;
     private GameEndSubController endController;
+    private LocationSubController locController;
     private Chronometer timer;
     private long timerStopped = 0;
 
     public GameController() {
         endController = new GameEndSubController(this);
+        locController = new LocationSubController();
     }
 
     public void onFlag(View v) {
@@ -59,6 +76,15 @@ public class GameController extends UIViewController implements AdapterView.OnIt
     }
 
     @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            locationGranted();
+        } else {
+            this.finish();
+        }
+    }
+
+    @Override
     protected void onLaunch() {
         setContentView(R.layout.activity_game_controller);
         super.onLaunch();
@@ -81,6 +107,39 @@ public class GameController extends UIViewController implements AdapterView.OnIt
         grid.setNumColumns(numCells);
         grid.setAdapter(adapter = new CellAdapter(getBaseContext(), SELECTED_LEVEL, numCells, numMines));
         grid.setOnItemClickListener(this);
+
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            locationGranted();
+        } else {
+            ActivityCompat.requestPermissions(this, new String[] {Manifest.permission.ACCESS_FINE_LOCATION}, 0);
+        }
+    }
+
+    private void locationGranted() {
+        LocationManager mLocationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+
+        try {
+            if (!mLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER))  {
+                final AlertDialog.Builder finished = new AlertDialog.Builder(this);
+                finished.setTitle("Problem");
+                finished.setMessage("You must enable GPS in order to play");
+
+                final EditText input = new EditText(this);
+                input.setInputType(InputType.TYPE_CLASS_TEXT);
+                finished.setView(input);
+
+                finished.setNeutralButton("OK", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        GameController.this.finish();
+                    }
+                });
+            } else {
+                locController.setLastLocation(mLocationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER));
+                mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 0, locController);
+            }
+        } catch (SecurityException ex) {
+        }
     }
 
     private void startLoseAnimation() {
@@ -135,7 +194,7 @@ public class GameController extends UIViewController implements AdapterView.OnIt
 
         if (prog != GameProgress.CONTINUE) timer.stop();
 
-        endController.invoke(prog, SystemClock.elapsedRealtime() - timer.getBase());
+        endController.invoke(prog, SystemClock.elapsedRealtime() - timer.getBase(), locController.getLastLocation());
     }
 
 

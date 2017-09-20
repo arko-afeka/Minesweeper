@@ -6,11 +6,11 @@ import android.os.IBinder;
 
 import afeka.katz.arkadiy.minesweeper.controller.GameController;
 
-public class LocationService extends Service {
+public class AngleService extends Service {
     private GameController controller;
     private Long startAngle;
 
-    public LocationService(GameController controller) {
+    public AngleService(GameController controller) {
         this.controller = controller;
     }
 
