@@ -102,13 +102,23 @@ public class GameEndSubController {
 
 
 
-    public void invoke(GameProgress progress, long currentTime, Location location) {
+    public void invoke(GameProgress progress, final long currentTime, final Location location) {
         switch (progress) {
             case EXPLODED:
-                lose();
+                cx.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        lose();
+                    }
+                });
                 break;
             case FINISHED:
-                win(currentTime, location);
+                cx.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        win(currentTime, location);
+                    }
+                });
                 break;
         }
     }

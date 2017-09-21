@@ -31,10 +31,9 @@ import afeka.katz.arkadiy.minesweeper.model.enums.Level;
 
 public class CellAdapter extends BaseAdapter {
     private final int NUMBER_OF_CELLS;
-    private final int NUMBER_OF_MINES;
 
+    private int numberOfMines;
     private Context cx;
-
     private LayoutInflater mInflater;
 
     CellType[][] cells;
@@ -47,7 +46,7 @@ public class CellAdapter extends BaseAdapter {
 
     public CellAdapter(Context cx, Level selectedLevel, int cells, int mines) {
         this.NUMBER_OF_CELLS = cells;
-        this.NUMBER_OF_MINES = mines;
+        this.numberOfMines = mines;
 
         this.cx = cx;
 
@@ -142,6 +141,31 @@ public class CellAdapter extends BaseAdapter {
         return res;
     }
 
+    public void hideAllOpenCells() {
+        for (int i = 0; i < cells.length; ++i) {
+            for (int j = 0; j < cells[i].length; ++j) {
+                if (cells[i][j] == CellType.OPEN) {
+                    cells[i][j] = CellType.NONE;
+                }
+            }
+        }
+
+        this.nearMines = new HashMap<>();
+        this.notifyDataSetChanged();
+    }
+
+    public GameProgress addMine() {
+        ++numberOfMines;
+        generateCells();
+        this.notifyDataSetChanged();
+        if (numberOfMines == NUMBER_OF_CELLS * NUMBER_OF_CELLS) {
+            openMines();
+            return GameProgress.EXPLODED;
+        }
+
+        return GameProgress.CONTINUE;
+    }
+
     public GameProgress open(int position) {
         Position pos = getPos(position);
         GameProgress res = GameProgress.CONTINUE;
@@ -163,10 +187,17 @@ public class CellAdapter extends BaseAdapter {
         Set<Integer> generatedMines = new HashSet<>();
         Random rand = new Random();
 
-        while (generatedMines.size() != NUMBER_OF_MINES) {
-            generatedMines.add(rand.nextInt(NUMBER_OF_CELLS * NUMBER_OF_CELLS));
+        while (generatedMines.size() != numberOfMines) {
+            int cellPos = rand.nextInt(NUMBER_OF_CELLS * NUMBER_OF_CELLS);
+
+            while (generatedMines.contains(cellPos)) {
+                cellPos = rand.nextInt(NUMBER_OF_CELLS * NUMBER_OF_CELLS);
+            }
+
+            generatedMines.add(cellPos);
         }
 
+        minesLocation = new ArrayList<>();
         for (Integer minePos: generatedMines) {
             minesLocation.add(new Position(minePos / NUMBER_OF_CELLS, minePos % NUMBER_OF_CELLS));
         }

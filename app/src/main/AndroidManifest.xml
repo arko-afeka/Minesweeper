@@ -18,8 +18,8 @@
             </intent-filter>
         </activity>
         <activity android:name=".controller.GameStartController" />
-        <activity android:name=".controller.GameController" />
-        <activity android:name=".controller.HighScoresController" />
+        <activity android:name=".controller.GameController" android:screenOrientation="portrait"/>
+        <activity android:name=".controller.HighScoresController" android:screenOrientation="portrait"/>
 
         <service
             android:name=".service.AngleService"
